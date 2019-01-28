@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.271
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SCRA", "SCRA\SCRA.csproj", "{05A2C2C3-BA50-45AC-83B9-67DB0EFC560E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SCRA.Data", "SCRA.Data\SCRA.Data.csproj", "{C70537EB-9410-48E6-B223-B7A43878B430}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SCRA.Framework", "SCRA.Framework\SCRA.Framework.csproj", "{60BC7294-D625-42E9-9925-9B3F765BC280}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{05A2C2C3-BA50-45AC-83B9-67DB0EFC560E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05A2C2C3-BA50-45AC-83B9-67DB0EFC560E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05A2C2C3-BA50-45AC-83B9-67DB0EFC560E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05A2C2C3-BA50-45AC-83B9-67DB0EFC560E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C70537EB-9410-48E6-B223-B7A43878B430}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C70537EB-9410-48E6-B223-B7A43878B430}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C70537EB-9410-48E6-B223-B7A43878B430}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C70537EB-9410-48E6-B223-B7A43878B430}.Release|Any CPU.Build.0 = Release|Any CPU
+		{60BC7294-D625-42E9-9925-9B3F765BC280}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60BC7294-D625-42E9-9925-9B3F765BC280}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60BC7294-D625-42E9-9925-9B3F765BC280}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60BC7294-D625-42E9-9925-9B3F765BC280}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B9124160-E90F-4B92-BAD4-D06D2BF94B3C}
+	EndGlobalSection
+EndGlobal
