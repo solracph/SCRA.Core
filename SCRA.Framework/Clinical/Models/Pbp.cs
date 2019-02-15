@@ -7,8 +7,10 @@ namespace SCRA.Framework.Models.Clinical
     {
         public int PbpId { get; set; }
 
+        public string ContractId { get; set; }
+
         public string Description { get; set; }
 
-        public ICollection<Contract> Contracts { get; set; }
+        public string ContractDescription { get; set; }
     }
 }

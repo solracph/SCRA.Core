@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using SCRA.Data.Clinical.Entities;
 using System.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Query;
+using System;
 
 namespace SCRA.Framework.Clinical
 {
@@ -53,8 +54,15 @@ namespace SCRA.Framework.Clinical
 
         public async Task<Result> GetPbpList()
         {
+
             IList<Pbp> pbpList = (
-                    await ClinicalDbService.PbpRepository.Queryable().Include(P => P.ContractPbp).ThenInclude(u => u.Contract).ToArrayAsync())
+
+                    await (
+                        from Pbp in ClinicalDbService.PbpRepository.Queryable().Include(P => P.ContractPbp)
+                        join ContractPbp in ClinicalDbService.ContractPbpRepository.Queryable()
+                        on Pbp.PbpId equals ContractPbp.PbpId
+                        select new { Pbp.PbpId, ContractPbp.ContractId, Pbp.Description, ContractDescription = ContractPbp.Contract.Description }
+                    ).ToArrayAsync())
                 .Select(item => _clinicalFactory.MappingToPbp.DefaultContext.Mapper.Map<Pbp>(item)).ToList();
 
             return Result.New(pbpList);
@@ -62,8 +70,10 @@ namespace SCRA.Framework.Clinical
 
         public async Task<Result> GetRules()
         {
+            var test = ClinicalDbService.RulePbpRepository.Queryable().Include(rp => rp.Contract).ToList();
+
                IList<Rule> rules = (
-                await _GetRuleQIncludableQueryable().ToArrayAsync()
+                await _GetRuleIncludableQueryable().ToListAsync()
             ).Select(item => _clinicalFactory.MappingToRule.DefaultContext.Mapper.Map<Rule>(item)).ToList();
 
             return Result.New(rules);
@@ -111,7 +121,11 @@ namespace SCRA.Framework.Clinical
                 ClinicalDbService.ContractRepository.AddAndAttach(Contract);
             }
 
-            foreach (PbpEntity Pbp in _ruleEntity.RulePbp.Select(r => r.Pbp))
+            IEnumerable<PbpEntity> PbpList = _ruleEntity.RulePbp.Select(r => r.Pbp).GroupBy(p => p.PbpId,(baseId, list) => new PbpEntity {
+                PbpId = baseId
+            });
+
+            foreach (PbpEntity Pbp in PbpList)
             {
                 ClinicalDbService.PbpRepository.AddAndAttach(Pbp);
             }
@@ -356,38 +370,24 @@ namespace SCRA.Framework.Clinical
             #endregion
 
             #region Update Pbp -----------------------------------------------------------------------------------------
+            
+                IEnumerable<RulePbpEntity> originalPbp = originalRuleEntity.RulePbp.Select(p => p);
+                IEnumerable<RulePbpEntity> editedPbp = newruleEntity.RulePbp.Select(p => p);
 
-            IEnumerable<int> originalPbpId = originalRuleEntity.RulePbp.Select(p => p.Pbp).Select(c => c.PbpId);
-            IEnumerable<int> editedPbpId = newruleEntity.RulePbp.Select(p => p.Pbp).Select(c => c.PbpId);
+                IEnumerable<RulePbpEntity> pbpToAdd = editedPbp.Except(originalPbp, new IRulePbpEntityComparer()).ToList();
 
-            IList<PbpEntity> pbpToAdd = new List<PbpEntity>();
-            IEnumerable<int> pbpsIdToAdd = editedPbpId.Except(originalPbpId);
-            foreach (int pbpId in pbpsIdToAdd)
-            {
-                PbpEntity pbp = ClinicalDbService.PbpRepository.GetById(pbpId);
-                if (!pbpToAdd.Contains(pbp))
-                    pbpToAdd.Add(pbp);
-            }
+                foreach (var pbp in pbpToAdd)
+                {
+                    PbpEntity _pbp = ClinicalDbService.PbpRepository.Queryable().Include(p => p.ContractPbp).FirstOrDefault(p => p.PbpId == pbp.PbpId);
+                }
 
-            pbpToAdd.ToList().ForEach(p => originalRuleEntity.RulePbp.Add( new RulePbpEntity {
-                RuleId = originalRuleEntity.RuleId,
-                Pbp = p
-            }
-            ));
+                pbpToAdd.ToList().ForEach(rp => originalRuleEntity.RulePbp.Add(rp));
 
-            IList<PbpEntity> pbpToRemove = new List<PbpEntity>();
-            IEnumerable<int> pbpsIdRemove = originalPbpId.Except(editedPbpId);
+                IEnumerable<RulePbpEntity> pbpToRemove = originalPbp.Except(editedPbp, new IRulePbpEntityComparer()).ToList();
 
-            foreach (int pbpId in pbpsIdRemove)
-            {
-                PbpEntity pbp = originalRuleEntity.RulePbp.Select(p => p.Pbp).FirstOrDefault(s => s.PbpId == pbpId);
-                if (!pbpToRemove.Contains(pbp))
-                    pbpToRemove.Add(pbp);
-            }
-
-            pbpToRemove.ToList().ForEach(p => originalRuleEntity.RulePbp.Remove(
-                originalRuleEntity.RulePbp.Select(rp => rp).Where(rp => rp.PbpId == p.PbpId).First()
-            ));
+                pbpToRemove.ToList().ForEach(p => originalRuleEntity.RulePbp.Remove(
+                    originalRuleEntity.RulePbp.Select(rp => rp).Where(rp => rp.PbpId == p.PbpId && p.ContractId == p.ContractId).First()
+                ));
             #endregion
 
             #region Update TIN -----------------------------------------------------------------------------------------
@@ -501,31 +501,34 @@ namespace SCRA.Framework.Clinical
             ClinicalDbService.RuleRepository.Update(originalRuleEntity);
 
             await ClinicalDbService.SaveAsync();
-
+          
             return Result.New(originalRuleEntity);
         }
         #endregion
 
-        private IIncludableQueryable<RuleEntity, ApplicationEntity> _GetRuleQIncludableQueryable()
+        private IIncludableQueryable<RuleEntity, ApplicationEntity> _GetRuleIncludableQueryable()
         {
-            return ClinicalDbService.RuleRepository.Queryable()
-                        .Include(r => r.RuleSegment)
-                            .ThenInclude(s => s.Segment)
-                        .Include(r => r.RuleContract)
-                            .ThenInclude(c => c.Contract)
-                        .Include(r => r.RulePbp)
-                            .ThenInclude(p => p.Pbp)
-                        .Include(r => r.RuleTin)
-                            .ThenInclude(t => t.Tin)
-                        .Include(r => r.RuleMeasure)
-                            .ThenInclude(m => m.Measure)
-                        .Include(r => r.RuleApplication)
-                    .ThenInclude(a => a.Application);
+
+             return ClinicalDbService.RuleRepository.Queryable()
+                         .Include(r => r.RuleSegment)
+                             .ThenInclude(s => s.Segment)
+                         .Include(r => r.RuleContract)
+                             .ThenInclude(c => c.Contract)
+                         .Include(r => r.RulePbp)
+                             .ThenInclude(p => p.Pbp)
+                         .Include(r => r.RulePbp)
+                             .ThenInclude(p => p.Contract)
+                         .Include(r => r.RuleTin)
+                             .ThenInclude(t => t.Tin)
+                         .Include(r => r.RuleMeasure)
+                             .ThenInclude(m => m.Measure)
+                         .Include(r => r.RuleApplication)
+                            .ThenInclude(a => a.Application);
         }
 
         private RuleEntity _GetReleById(int? ruleId)
         {
-            return _GetRuleQIncludableQueryable().Where(r => r.RuleId == ruleId).First();
+            return _GetRuleIncludableQueryable().Where(r => r.RuleId == ruleId).First();
         }
 
         private IIncludableQueryable<UserEntity, MeasureEntity> _GetUsersIncludableQueryable()
@@ -554,6 +557,11 @@ namespace SCRA.Framework.Clinical
                           .ThenInclude(r => r.RulePbp)
                               .ThenInclude(r => r.Pbp)
 
+                .Include(u => u.UserRule)
+                      .ThenInclude(r => r.Rule)
+                          .ThenInclude(r => r.RulePbp)
+                              .ThenInclude(r => r.Contract)
+
                   .Include(u => u.UserRule)
                       .ThenInclude(r => r.Rule)
                           .ThenInclude(r => r.RuleTin)
@@ -576,5 +584,31 @@ namespace SCRA.Framework.Clinical
         }
     }
 
+    public class IRulePbpEntityComparer : IEqualityComparer<RulePbpEntity>
+    {
+        public int GetHashCode(RulePbpEntity co)
+        {
+            if (co == null)
+            {
+                return 0;
+            }
+            return co.PbpId.GetHashCode();
+        }
+
+        public bool Equals(RulePbpEntity x1, RulePbpEntity x2)
+        {
+            if (ReferenceEquals(x1, x2))
+            {
+                return true;
+            }
+            if (ReferenceEquals(x1, null) ||
+                ReferenceEquals(x2, null))
+            {
+                return false;
+            }
+
+            return x1.PbpId == x2.PbpId && x1.ContractId == x2.ContractId;
+        }
+    }
 
 }

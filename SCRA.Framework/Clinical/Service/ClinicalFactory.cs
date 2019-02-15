@@ -30,11 +30,7 @@ namespace SCRA.Framework.Clinical.Service
         public Mapper MappingToPbp
             => _mappingToPbp ?? (_mappingToPbp = new Mapper(new MapperConfiguration(
                 cfg => {
-                    cfg.CreateMap<PbpEntity, Pbp>()
-                    .ForMember(
-                        dest => dest.Contracts, 
-                        opt => opt.MapFrom(
-                            src => src.ContractPbp.Select(c => c.Contract) ));
+                    cfg.CreateMap<PbpEntity, Pbp>();
                 })
             ));
 
@@ -59,7 +55,7 @@ namespace SCRA.Framework.Clinical.Service
                         .ForMember(
                             dest => dest.Pbp,
                             opt => opt.MapFrom(
-                                src => src.RulePbp.Select(c => c.Pbp)))
+                                src => src.RulePbp))
                         .ForMember(
                             dest => dest.Tin,
                             opt => opt.MapFrom(
@@ -72,11 +68,23 @@ namespace SCRA.Framework.Clinical.Service
                             dest => dest.Applications,
                             opt => opt.MapFrom(
                                 src => src.RuleApplication.Select(c => c.Application)));
-                    cfg.CreateMap<PbpEntity, Pbp>()
-                    .ForMember(
-                        dest => dest.Contracts,
-                        opt => opt.MapFrom(
-                            src => src.ContractPbp.Select(c => c.Contract)));
+                    cfg.CreateMap<RulePbpEntity, Pbp>()
+                        .ForMember(
+                            dest => dest.PbpId,
+                            opt => opt.MapFrom(
+                                src => src.PbpId))
+                        .ForMember(
+                            dest => dest.Description,
+                            opt => opt.MapFrom(
+                                src => src.Pbp.Description))
+                        .ForMember(
+                            dest => dest.ContractId,
+                            opt => opt.MapFrom(
+                                src => src.ContractId))
+                        .ForMember(
+                            dest => dest.ContractDescription,
+                            opt => opt.MapFrom(
+                                src => src.Contract.Description));
                 })
             ));
 
@@ -204,7 +212,7 @@ namespace SCRA.Framework.Clinical.Service
                     .ForMember(
                         dest => dest.Pbp,
                         opt => opt.MapFrom(
-                            src => src.RulePbp.Select(c => c.Pbp)))
+                            src => src.RulePbp))
                     .ForMember(
                         dest => dest.Tin,
                         opt => opt.MapFrom(
@@ -215,10 +223,23 @@ namespace SCRA.Framework.Clinical.Service
                             src => src.RuleMeasure.Select(c => c.Measure)));
 
 
-                cfg.CreateMap<PbpEntity, Pbp>()
-                  .ForMember(
-                      dest => dest.Contracts,
-                      opt => opt.Ignore());
+                cfg.CreateMap<RulePbpEntity, Pbp>()
+                    .ForMember(
+                        dest => dest.PbpId,
+                        opt => opt.MapFrom(
+                            src => src.PbpId))
+                    .ForMember(
+                        dest => dest.Description,
+                        opt => opt.MapFrom(
+                            src => src.Pbp.Description))
+                    .ForMember(
+                        dest => dest.ContractId,
+                        opt => opt.MapFrom(
+                            src => src.ContractId))
+                    .ForMember(
+                        dest => dest.ContractDescription,
+                        opt => opt.MapFrom(
+                            src => src.Contract.Description));
             })
         ));
 

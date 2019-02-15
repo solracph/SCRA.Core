@@ -16,6 +16,8 @@ namespace SCRA.Data.Clinical.Services
         private UserRepository _userRepository;
 
         private UserApplicationRepository _userApplicationRepository;
+        private ContractPbpRepository _contractPbpRepository;
+        private RulePbpRepository _rulePbpRepository;
 
         public ClinicalDbService()
             : base()
@@ -47,5 +49,11 @@ namespace SCRA.Data.Clinical.Services
 
         public UserApplicationRepository UserApplicationRepository
            => _userApplicationRepository ?? (_userApplicationRepository = new UserApplicationRepository(DbContext));
+
+        public ContractPbpRepository ContractPbpRepository
+              => _contractPbpRepository ?? (_contractPbpRepository = new ContractPbpRepository(DbContext));
+
+        public RulePbpRepository RulePbpRepository
+             => _rulePbpRepository ?? (_rulePbpRepository = new RulePbpRepository(DbContext));
     }
 }
