@@ -65,7 +65,7 @@ namespace SCRA.Framework.Clinical
                             ContractPbp.ContractId,
                             Pbp.Description, 
                             ContractDescription = ContractPbp.Contract.Description,
-                            ContractPbp.ContractPbpId
+                            ContractPbp.ContractPBPId
                         }
                     ).ToArrayAsync())
                 .Select(item => _clinicalFactory.MappingToPbp.DefaultContext.Mapper.Map<Pbp>(item)).ToList();
@@ -114,7 +114,9 @@ namespace SCRA.Framework.Clinical
         #region  Create
         public async Task<Result> CreateNewRule(Rule rule)
         {
-            RuleEntity _ruleEntity = _clinicalFactory.MappingToRuleEntity.DefaultContext.Mapper.Map<RuleEntity>(rule);
+            RuleEntity _ruleEntity = new RuleEntity();
+         
+            _ruleEntity = _clinicalFactory.MappingToRuleEntity.DefaultContext.Mapper.Map<RuleEntity>(rule);
 
             foreach (SegmentEntity Segment in _ruleEntity.RuleSegment.Select(r => r.Segment))
             {
@@ -126,13 +128,9 @@ namespace SCRA.Framework.Clinical
                 ClinicalDbService.ContractRepository.AddAndAttach(Contract);
             }
 
-            IEnumerable<PbpEntity> PbpList = _ruleEntity.RulePbp.Select(r => r.Pbp).GroupBy(p => p.PbpId,(baseId, list) => new PbpEntity {
-                PbpId = baseId
-            });
-
-            foreach (PbpEntity Pbp in PbpList)
+            foreach (ContractPbpEntity ContractPbp in _ruleEntity.RulePbp.Select(r => r.ContractPbp))
             {
-                ClinicalDbService.PbpRepository.AddAndAttach(Pbp);
+                ClinicalDbService.ContractPbpRepository.AddAndAttach(ContractPbp);
             }
 
             foreach (TinEntity Tin in _ruleEntity.RuleTin.Select(r => r.Tin))
@@ -175,7 +173,7 @@ namespace SCRA.Framework.Clinical
                     ClinicalDbService.ContractRepository.AddAndAttach(Contract);
                 }
 
-                foreach (PbpEntity Pbp in _ruleEntity.RulePbp.Select(r => r.Pbp))
+                foreach (PbpEntity Pbp in _ruleEntity.RulePbp.Select(r => r.ContractPbp.Pbp))
                 {
                     ClinicalDbService.PbpRepository.AddAndAttach(Pbp);
                 }
@@ -374,27 +372,38 @@ namespace SCRA.Framework.Clinical
             #endregion
 
             #region Update Pbp -----------------------------------------------------------------------------------------
-            try
+            IEnumerable<int> originalContractPbpId = originalRuleEntity.RulePbp.Select(p => p.ContractPbp).Select(cp => cp.ContractPBPId);
+            IEnumerable<int> editedContractPbpId = newruleEntity.RulePbp.Select(p => p.ContractPbp).Select(cp => cp.ContractPBPId);
+
+            IList<ContractPbpEntity> contractPbpToAdd = new List<ContractPbpEntity>();
+            IEnumerable<int> contractPbpIdToAdd = editedContractPbpId.Except(originalContractPbpId);
+
+            foreach (int contractPbpId in contractPbpIdToAdd)
             {
-                IEnumerable<RulePbpEntity> originalPbp = originalRuleEntity.RulePbp.Select(p => p);
-                IEnumerable<RulePbpEntity> editedPbp = newruleEntity.RulePbp.Select(p => p);
+                ContractPbpEntity contractPbp = ClinicalDbService.ContractPbpRepository.GetById(contractPbpId);
+                if (!contractPbpToAdd.Contains(contractPbp))
+                    contractPbpToAdd.Add(contractPbp);
+            }
 
-                IEnumerable<RulePbpEntity> rulePbpToAdd = editedPbp.Except(originalPbp, new IRulePbpEntityComparer()).ToList();
+            contractPbpToAdd.ToList().ForEach(cp => originalRuleEntity.RulePbp.Add(new RulePbpEntity {
+                RuleId = originalRuleEntity.RuleId,
+                ContractPbp = cp
+            }));
 
-                foreach (RulePbpEntity rulePbp in rulePbpToAdd.GroupBy(p => p.PbpId, (baseId, list) => new RulePbpEntity{PbpId = baseId}))
-                {
-                    ClinicalDbService.PbpRepository.GetById(rulePbp.PbpId);
-                }
+            IList<ContractPbpEntity> contractPbpToRemove = new List<ContractPbpEntity>();
+            IEnumerable<int> contractPbpIdToRemove = originalContractPbpId.Except(editedContractPbpId);
 
-                rulePbpToAdd.ToList().ForEach(rp => originalRuleEntity.RulePbp.Add(rp));
+            foreach (int contractPbpId in contractPbpIdToRemove)
+            {
+                ContractPbpEntity contractPbp = originalRuleEntity.RulePbp.Select(c => c.ContractPbp).FirstOrDefault(s => s.ContractPBPId == contractPbpId);
+                if (!contractPbpToRemove.Contains(contractPbp))
+                    contractPbpToRemove.Add(contractPbp);
+            }
 
-                IEnumerable<RulePbpEntity> pbpToRemove = originalPbp.Except(editedPbp, new IRulePbpEntityComparer()).ToList();
+            contractPbpToRemove.ToList().ForEach(c => originalRuleEntity.RulePbp.Remove(
+                originalRuleEntity.RulePbp.Select(rc => rc).Where(rc => rc.ContractPBPId == c.ContractPBPId).First()
+            ));
 
-                pbpToRemove.ToList().ForEach(p => originalRuleEntity.RulePbp.Remove(
-                    originalRuleEntity.RulePbp.Select(rp => rp).Where(rp => rp.PbpId == p.PbpId && rp.ContractPBPId == p.ContractPBPId).First()
-                ));
-
-            
             #endregion
 
             #region Update TIN -----------------------------------------------------------------------------------------
@@ -510,11 +519,7 @@ namespace SCRA.Framework.Clinical
             await ClinicalDbService.SaveAsync();
 
 
-            }
-            catch (Exception e)
-            {
-                var er = e;
-            }
+         
 
             return Result.New(originalRuleEntity);
 
@@ -528,11 +533,15 @@ namespace SCRA.Framework.Clinical
                     .ThenInclude(s => s.Segment)
                 .Include(r => r.RuleContract)
                     .ThenInclude(c => c.Contract)
-                .Include(r => r.RulePbp)
-                    .ThenInclude(p => p.Pbp)
+                
                 .Include(r => r.RulePbp)
                     .ThenInclude(p => p.ContractPbp)
                         .ThenInclude(p => p.Contract)
+
+                .Include(r => r.RulePbp)
+                    .ThenInclude(p => p.ContractPbp)
+                        .ThenInclude(p => p.Pbp)
+
                 .Include(r => r.RuleTin)
                     .ThenInclude(t => t.Tin)
                 .Include(r => r.RuleMeasure)
@@ -570,13 +579,14 @@ namespace SCRA.Framework.Clinical
                 .Include(u => u.UserRule)
                     .ThenInclude(r => r.Rule)
                         .ThenInclude(r => r.RulePbp)
-                            .ThenInclude(r => r.Pbp)
+                            .ThenInclude(r => r.ContractPbp)
+                                .ThenInclude(r => r.Contract)
 
                 .Include(u => u.UserRule)
                     .ThenInclude(r => r.Rule)
                         .ThenInclude(r => r.RulePbp)
                             .ThenInclude(r => r.ContractPbp)
-                                .ThenInclude(r => r.Contract)
+                                .ThenInclude(r => r.Pbp)
 
                 .Include(u => u.UserRule)
                     .ThenInclude(r => r.Rule)
@@ -600,31 +610,6 @@ namespace SCRA.Framework.Clinical
         }
     }
 
-    public class IRulePbpEntityComparer : IEqualityComparer<RulePbpEntity>
-    {
-        public int GetHashCode(RulePbpEntity co)
-        {
-            if (co == null)
-            {
-                return 0;
-            }
-            return co.PbpId.GetHashCode();
-        }
-
-        public bool Equals(RulePbpEntity x1, RulePbpEntity x2)
-        {
-            if (ReferenceEquals(x1, x2))
-            {
-                return true;
-            }
-            if (ReferenceEquals(x1, null) ||
-                ReferenceEquals(x2, null))
-            {
-                return false;
-            }
-
-            return x1.PbpId == x2.PbpId && x1.ContractPBPId == x2.ContractPBPId;
-        }
-    }
+    
 
 }

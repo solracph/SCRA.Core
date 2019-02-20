@@ -7,7 +7,7 @@ namespace SCRA.Data.Clinical.Entities
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int ContractPbpId { get; set; }
+        public int ContractPBPId { get; set; }
 
         public int ContractId { get; set; }
         public ContractEntity Contract { get; set; }

@@ -14,6 +14,5 @@ namespace SCRA.Data.Clinical.Entities
 
         public ICollection<ContractPbpEntity> ContractPbp { get; set; }
 
-        public ICollection<RulePbpEntity> RulePbp { get; set; }
     }
 }

@@ -9,9 +9,6 @@ namespace SCRA.Data.Clinical.Entities
         public int RuleId { get; set; }
         public RuleEntity Rule { get; set; }
 
-        public int PbpId { get; set; }
-        public PbpEntity Pbp { get; set; }
-
         public int ContractPBPId { get; set; }
         public ContractPbpEntity ContractPbp { get; set; }
     }
