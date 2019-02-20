@@ -13,7 +13,5 @@ namespace SCRA.Data.Clinical.Entities
         public string Description { get; set; }
 
         public virtual ICollection<RuleContractEntity> RuleContract { get; set; }
-
-        public virtual ICollection<RulePbpEntity> RulePbp { get; set; }
     }
 }

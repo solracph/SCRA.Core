@@ -88,7 +88,7 @@ namespace SCRA.Data.Common.Models
                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<RulePbpEntity>()
-           .HasKey(o => new { o.RuleId, o.PbpId, o.ContractId });
+           .HasKey(o => new { o.RuleId, o.PbpId, o.ContractPBPId });
 
             modelBuilder.Entity<RulePbpEntity>()
                .HasOne(e => e.Pbp)
@@ -100,11 +100,6 @@ namespace SCRA.Data.Common.Models
               .WithMany(e => e.RulePbp)
               .HasForeignKey(ec => ec.RuleId)
               .OnDelete(DeleteBehavior.Cascade);
-            modelBuilder.Entity<RulePbpEntity>()
-             .HasOne(e => e.Contract)
-             .WithMany(e => e.RulePbp)
-             .HasForeignKey(ec => ec.ContractId)
-             .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<RuleTinEntity>()
             .HasKey(o => new { o.RuleId, o.TinId });

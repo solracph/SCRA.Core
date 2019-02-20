@@ -28,11 +28,7 @@ namespace SCRA.Framework.Clinical.Service
           => _mappingToContract ?? (_mappingToContract = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<ContractEntity, Contract>())));
 
         public Mapper MappingToPbp
-            => _mappingToPbp ?? (_mappingToPbp = new Mapper(new MapperConfiguration(
-                cfg => {
-                    cfg.CreateMap<PbpEntity, Pbp>();
-                })
-            ));
+            => _mappingToPbp ?? (_mappingToPbp = new Mapper(new MapperConfiguration(cfg =>  cfg.CreateMap<PbpEntity, Pbp>())));
 
         public Mapper MappingToTin
           => _mappingToTin ?? (_mappingToTin = new Mapper(new MapperConfiguration(cfg => cfg.CreateMap<TinEntity, Tin>())));
@@ -68,6 +64,7 @@ namespace SCRA.Framework.Clinical.Service
                             dest => dest.Applications,
                             opt => opt.MapFrom(
                                 src => src.RuleApplication.Select(c => c.Application)));
+
                     cfg.CreateMap<RulePbpEntity, Pbp>()
                         .ForMember(
                             dest => dest.PbpId,
@@ -80,11 +77,15 @@ namespace SCRA.Framework.Clinical.Service
                         .ForMember(
                             dest => dest.ContractId,
                             opt => opt.MapFrom(
-                                src => src.ContractId))
+                                src => src.ContractPbp.Contract.ContractId))
                         .ForMember(
                             dest => dest.ContractDescription,
                             opt => opt.MapFrom(
-                                src => src.Contract.Description));
+                                src => src.ContractPbp.Contract.Description))
+                        .ForMember(
+                            dest => dest.ContractPbpId,
+                            opt => opt.MapFrom(
+                                src => src.ContractPbp.ContractPbpId));
                 })
             ));
 
@@ -92,36 +93,37 @@ namespace SCRA.Framework.Clinical.Service
             => _mappingToRuleEntity ?? (_mappingToRuleEntity = new Mapper(new MapperConfiguration(cfg =>
             {
                 cfg.CreateMap<Rule, RuleEntity>()
-                .ForMember(
-                    dest => dest.RuleApplication,
-                    opt => opt.MapFrom(
-                        src => src.Applications))
-                .ForMember(
-                    dest => dest.RuleSegment,
-                    opt => opt.MapFrom(
-                        src => src.Segments))
-                .ForMember(
-                    dest => dest.RuleContract,
-                    opt => opt.MapFrom(
-                        src => src.Contracts))
-                .ForMember(
-                    dest => dest.RulePbp,
-                    opt => opt.MapFrom(
-                        src => src.Pbp))
-                .ForMember(
-                    dest => dest.RuleTin,
-                    opt => opt.MapFrom(
-                        src => src.Tin))
-                .ForMember(
-                    dest => dest.RuleMeasure,
-                    opt => opt.MapFrom(
-                        src => src.Measures)); 
+                    .ForMember(
+                        dest => dest.RuleApplication,
+                        opt => opt.MapFrom(
+                            src => src.Applications))
+                    .ForMember(
+                        dest => dest.RuleSegment,
+                        opt => opt.MapFrom(
+                            src => src.Segments))
+                    .ForMember(
+                        dest => dest.RuleContract,
+                        opt => opt.MapFrom(
+                            src => src.Contracts))
+                    .ForMember(
+                        dest => dest.RulePbp,
+                        opt => opt.MapFrom(
+                            src => src.Pbp))
+                    .ForMember(
+                        dest => dest.RuleTin,
+                        opt => opt.MapFrom(
+                            src => src.Tin))
+                    .ForMember(
+                        dest => dest.RuleMeasure,
+                        opt => opt.MapFrom(
+                            src => src.Measures)); 
 
                 cfg.CreateMap<Application, RuleApplicationEntity>()
                     .ForMember(
                         dest => dest.Application,
                         opt => opt.MapFrom(
                             src => src));
+
                 cfg.CreateMap<Application, ApplicationEntity>()
                     .ForMember(
                         dest => dest.RuleApplication,
@@ -132,6 +134,7 @@ namespace SCRA.Framework.Clinical.Service
                         dest => dest.Segment,
                         opt => opt.MapFrom(
                             src => src));
+
                 cfg.CreateMap<Segment, SegmentEntity>()
                     .ForMember(
                         dest => dest.RuleSegment,
@@ -235,11 +238,15 @@ namespace SCRA.Framework.Clinical.Service
                     .ForMember(
                         dest => dest.ContractId,
                         opt => opt.MapFrom(
-                            src => src.ContractId))
+                            src => src.ContractPbp.Contract.ContractId))
                     .ForMember(
                         dest => dest.ContractDescription,
                         opt => opt.MapFrom(
-                            src => src.Contract.Description));
+                            src => src.ContractPbp.Contract.Description))
+                    .ForMember(
+                        dest => dest.ContractPbpId,
+                        opt => opt.MapFrom(
+                            src => src.ContractPbp.ContractPbpId));
             })
         ));
 
@@ -265,46 +272,45 @@ namespace SCRA.Framework.Clinical.Service
                         opt => opt.MapFrom(
                             src => src.Rules));
 
-                  cfg.CreateMap<Application, UserApplicationEntity>()
-                   .ForMember(
-                       dest => dest.Application,
-                       opt => opt.MapFrom(
-                           src => src));
+                    cfg.CreateMap<Application, UserApplicationEntity>()
+                        .ForMember(
+                            dest => dest.Application,
+                            opt => opt.MapFrom(
+                                src => src));
 
-                  cfg.CreateMap<Application, ApplicationEntity>()
-                    .ForMember(
-                        dest => dest.RuleApplication,
-                        opt => opt.Ignore())
-                    .ForMember(
-                        dest => dest.UserApplication,
-                        opt => opt.Ignore());
+                    cfg.CreateMap<Application, ApplicationEntity>()
+                        .ForMember(
+                            dest => dest.RuleApplication,
+                            opt => opt.Ignore())
+                        .ForMember(
+                            dest => dest.UserApplication,
+                            opt => opt.Ignore());
 
+                    cfg.CreateMap<Rule, UserRuleEntity>()
+                        .ForMember(
+                            dest => dest.Rule,
+                            opt => opt.MapFrom(
+                                src => src));
 
-                  cfg.CreateMap<Rule, UserRuleEntity>()
-                   .ForMember(
-                       dest => dest.Rule,
-                       opt => opt.MapFrom(
-                           src => src));
-
-                  cfg.CreateMap<Rule, RuleEntity>()
-                   .ForMember(
-                       dest => dest.RuleSegment,
-                       opt => opt.Ignore())
-                   .ForMember(
-                       dest => dest.RuleApplication,
-                       opt => opt.Ignore())
-                    .ForMember(
-                       dest => dest.RuleContract,
-                       opt => opt.Ignore())
-                    .ForMember(
-                       dest => dest.RulePbp,
-                       opt => opt.Ignore())
-                    .ForMember(
-                       dest => dest.RuleTin,
-                       opt => opt.Ignore())
-                    .ForMember(
-                       dest => dest.RuleMeasure,
-                       opt => opt.Ignore());
+                    cfg.CreateMap<Rule, RuleEntity>()
+                        .ForMember(
+                            dest => dest.RuleSegment,
+                            opt => opt.Ignore())
+                        .ForMember(
+                            dest => dest.RuleApplication,
+                            opt => opt.Ignore())
+                        .ForMember(
+                            dest => dest.RuleContract,
+                            opt => opt.Ignore())
+                        .ForMember(
+                            dest => dest.RulePbp,
+                            opt => opt.Ignore())
+                        .ForMember(
+                            dest => dest.RuleTin,
+                            opt => opt.Ignore())
+                        .ForMember(
+                            dest => dest.RuleMeasure,
+                            opt => opt.Ignore());
               }
           )));
     }

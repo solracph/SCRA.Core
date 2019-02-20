@@ -12,7 +12,7 @@ namespace SCRA.Data.Clinical.Entities
         public int PbpId { get; set; }
         public PbpEntity Pbp { get; set; }
 
-        public int ContractId { get; set; }
-        public virtual  ContractEntity Contract { get; set; }
+        public int ContractPBPId { get; set; }
+        public ContractPbpEntity ContractPbp { get; set; }
     }
 }

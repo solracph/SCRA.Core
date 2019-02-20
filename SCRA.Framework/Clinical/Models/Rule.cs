@@ -26,7 +26,5 @@ namespace SCRA.Framework.Models.Clinical
         public ICollection<Measure> Measures { get; set; }
 
         public ICollection<Application> Applications { get; set; }
-
-        //public ICollection<RuleApplication> RuleApplication { get; set; }
     }
 }

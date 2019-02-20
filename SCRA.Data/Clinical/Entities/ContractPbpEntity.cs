@@ -14,6 +14,5 @@ namespace SCRA.Data.Clinical.Entities
 
         public int PbpId { get; set; }
         public PbpEntity Pbp { get; set; }
-
     }
 }

@@ -9,8 +9,11 @@ namespace SCRA.Framework.Models.Clinical
 
         public string ContractId { get; set; }
 
+        public int ContractPbpId { get; set; }
+
         public string Description { get; set; }
 
         public string ContractDescription { get; set; }
+
     }
 }
