@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 USE [SCRA]
 GO
 
@@ -47,3 +48,55 @@ GO
 ALTER TABLE [dbo].[RulePBP] CHECK CONSTRAINT [FK_RulePBP_Rule]
 GO
 
+=======
+USE [SCRA]
+GO
+
+/****** Object:  Table [dbo].[RulePBP]    Script Date: 2/18/2019 8:50:01 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+IF OBJECT_ID('[dbo].[RulePBP]' , 'U') IS NOT NULL  
+DROP TABLE [dbo].[RulePBP]
+GO
+
+CREATE TABLE [dbo].[RulePBP](
+	[RuleId] [int] NOT NULL,
+	[PBPId] [int] NOT NULL,
+	[ContractId] [int] NULL,
+ CONSTRAINT [IX_RulePBP] UNIQUE NONCLUSTERED 
+(
+	[RuleId] ASC,
+	[PBPId] ASC,
+	[ContractId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+
+ALTER TABLE [dbo].[RulePBP]  WITH CHECK ADD  CONSTRAINT [FK_RulePBP_Contract] FOREIGN KEY([ContractId])
+REFERENCES [dbo].[Contract] ([ContractId])
+GO
+
+ALTER TABLE [dbo].[RulePBP] CHECK CONSTRAINT [FK_RulePBP_Contract]
+GO
+
+ALTER TABLE [dbo].[RulePBP]  WITH CHECK ADD  CONSTRAINT [FK_RulePBP_PBP] FOREIGN KEY([PBPId])
+REFERENCES [dbo].[PBP] ([PBPId])
+GO
+
+ALTER TABLE [dbo].[RulePBP] CHECK CONSTRAINT [FK_RulePBP_PBP]
+GO
+
+ALTER TABLE [dbo].[RulePBP]  WITH CHECK ADD  CONSTRAINT [FK_RulePBP_Rule] FOREIGN KEY([RuleId])
+REFERENCES [dbo].[Rule] ([RuleId])
+GO
+
+ALTER TABLE [dbo].[RulePBP] CHECK CONSTRAINT [FK_RulePBP_Rule]
+GO
+
+
+>>>>>>> deb24bd28d78705916bbab6a73e76220addf362b
